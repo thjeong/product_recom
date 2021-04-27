@@ -6,6 +6,9 @@ import tensorflow as tf
 from tensorflow import keras
 from flask import Flask, request, jsonify, redirect
 
+from werkzeug.local import LocalStack
+_request_ctx_stack = LocalStack()
+
 # initialize our Flask application and the Keras model
 app = Flask(__name__)
 RANK_TO_SERVE = 5
@@ -16,33 +19,39 @@ ftrs, ftr_array, ftr_ids = None, None, None
 class NeuralNetwork:
     def __init__(self):
         #self.session = tf.Session()
-        self.graph = tf.get_default_graph()
+        # self.graph = tf.Graph() #.get_default_graph()
         # the folder in which the model and weights are stored
-        self.model_folder = os.path.join(os.path.abspath("src"), "static")
+        # self.model_folder = os.path.join(os.path.abspath("src"), "static")
         self.model = None
         # for some reason in a flask app the graph/session needs to be used in the init else it hangs on other threads
-        with self.graph.as_default():
-            #with self.session.as_default():
-            logging.info("neural network initialised")
+        # with self.graph.as_default():
+        #     #with self.session.as_default():
+        #     logging.info("neural network initialised")
     
     def load(self, file_name=None):
         """
         :param file_name: [model_file_name, weights_file_name]
         :return:
         """
-        with self.graph.as_default():
+        # with self.graph.as_default():
             #with self.session.as_default():
-            try:
-                self.model = keras.models.load_model(file_name)
-                return True
-            except Exception as e:
-                logging.exception(e)
-                return False
+        try:
+            self.model = keras.models.load_model(file_name)
+            #self.model = tf.keras.experimental.load_from_saved_model(file_name)
+            # self.model.compile(loss={'cont_out': 'mean_absolute_error', 
+            #         'cat_out': 'sparse_categorical_crossentropy'}, # softmax_cross_entropy_with_logits_v2
+            #   optimizer='sgd',
+            #   metrics={#'cont_out': metrics.mae,
+            #       'cat_out': 'sparse_categorical_accuracy'})
+            return True
+        except Exception as e:
+            logging.exception(e)
+            return False
 
     def predict(self, x):
-        with self.graph.as_default():
+        # with self.graph.as_default():
             #with self.session.as_default():
-            y = self.model.predict(x)
+        y = self.model.predict(x)
         return y
 
 def load_ftrmap():
@@ -98,6 +107,7 @@ def make_prediction_merge_3_results(data):
 def predict():
     # initialize the data dictionary that will be returned from the
     # view
+    print(_request_ctx_stack._local.__ident_func__().getcurrent())
     print('[requested json]', request)
     if not request.is_json:
         return jsonify({"msg": "Missing JSON in request"}), 400
@@ -114,6 +124,6 @@ if __name__ == "__main__":
         "please wait until server has fully started"))
     #global nn
     nn = NeuralNetwork()
-    nn.load('./bin/20210426.model')
+    nn.load('./bin/20210427.model')
     load_ftrmap()
-    app.run()
+    app.run(threaded=True)
