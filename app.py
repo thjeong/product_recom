@@ -6,8 +6,8 @@ import tensorflow as tf
 from tensorflow import keras
 from flask import Flask, request, jsonify, redirect
 
-from werkzeug.local import LocalStack
-_request_ctx_stack = LocalStack()
+#from werkzeug.local import LocalStack
+#_request_ctx_stack = LocalStack()
 
 # initialize our Flask application and the Keras model
 app = Flask(__name__)
@@ -107,7 +107,7 @@ def make_prediction_merge_3_results(data):
 def predict():
     # initialize the data dictionary that will be returned from the
     # view
-    print(_request_ctx_stack._local.__ident_func__().getcurrent())
+    #print(_request_ctx_stack._local.__ident_func__().getcurrent())
     print('[requested json]', request)
     if not request.is_json:
         return jsonify({"msg": "Missing JSON in request"}), 400
@@ -126,4 +126,4 @@ if __name__ == "__main__":
     nn = NeuralNetwork()
     nn.load('./bin/20210427.model')
     load_ftrmap()
-    app.run(threaded=True)
+    app.run(hosts='0.0.0.0', threaded=True)
