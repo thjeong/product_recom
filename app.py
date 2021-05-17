@@ -126,4 +126,4 @@ if __name__ == "__main__":
     nn = NeuralNetwork()
     nn.load('./bin/20210427.model')
     load_ftrmap()
-    app.run(hosts='0.0.0.0', threaded=True)
+    app.run(host='0.0.0.0', threaded=True)
